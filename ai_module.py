@@ -4,7 +4,7 @@ import json
 import re
 from typing import Dict, Any
 
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "your-api-key-here"
 
 def encode_image(image_file):
     """Encode image file to base64."""
