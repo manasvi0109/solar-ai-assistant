@@ -34,15 +34,22 @@ This comprehensive Solar Industry AI Assistant combines **computer vision**, **a
 ### **Core Technologies**
 - **Frontend**: Streamlit (Professional UI with interactive controls)
 - **Computer Vision**: OpenCV (Image processing and rooftop detection)
-- **AI Integration**: OpenRouter API with Gemini Pro Vision
+- **AI Integration**: OpenRouter API with Gemini Pro Vision + Hugging Face Models
 - **Backend**: Python 3.8+ (Modular architecture)
 - **Data Processing**: Pandas, NumPy (Financial calculations)
+- **ML Framework**: PyTorch, Transformers (Hugging Face ecosystem)
 
 ### **AI & Machine Learning**
 - **Vision AI**: Structured output extraction with confidence scoring
 - **Prompt Engineering**: Advanced prompts for consistent JSON responses
 - **Fallback Processing**: Robust parsing when AI responses vary
-- **Multi-source Analysis**: OpenCV + AI combined insights
+- **Multi-source Analysis**: OpenCV + AI + Hugging Face combined insights
+- **🤗 Hugging Face Models**:
+  - Image Classification (ResNet-50)
+  - Object Detection (DETR)
+  - Image Captioning (BLIP)
+  - Text Generation (DialoGPT)
+  - Semantic Search (Sentence Transformers)
 
 ---
 
@@ -52,8 +59,10 @@ This comprehensive Solar Industry AI Assistant combines **computer vision**, **a
 solar-ai-assistant/
 ├── 📱 app.py                 # Main Streamlit application
 ├── 🤖 ai_module.py           # AI analysis with structured output
+├── 🤗 huggingface_module.py  # Hugging Face models integration
 ├── 🖼️ opencv_module.py       # Image processing with OpenCV
 ├── ⚙️ utils.py               # Solar industry calculations & data
+├── 🚀 app_hf.py              # Hugging Face Spaces deployment version
 ├── 📋 requirements.txt       # Python dependencies
 ├── 📖 README.md              # This documentation
 ├── 📁 assets/                # Sample images and resources
@@ -159,6 +168,14 @@ The application provides detailed analysis including:
 - **Safety Standards**: Earthing, lightning protection, fire safety
 - **Incentives**: Central subsidies, accelerated depreciation, net metering
 
+### **🤗 Hugging Face Integration**
+- **Advanced Computer Vision**: Pre-trained models for enhanced rooftop analysis
+- **Object Detection**: Automatic identification of obstacles and roof features
+- **Image Classification**: Roof type and condition assessment
+- **Natural Language Generation**: AI-powered analysis reports
+- **Semantic Search**: Intelligent search through solar industry knowledge base
+- **Confidence Scoring**: Reliability assessment for all AI predictions
+
 ---
 
 ## � **Technical Specifications**
@@ -233,6 +250,25 @@ streamlit run app.py
 1. Push code to GitHub repository
 2. Connect to Streamlit Cloud
 3. Deploy with one click
+
+### **🤗 Hugging Face Spaces**
+1. Create a new Space on Hugging Face
+2. Upload `app_hf.py` as your main application file
+3. Add `requirements.txt` with dependencies
+4. Set Space SDK to "Streamlit"
+5. Deploy automatically
+
+**Hugging Face Spaces Configuration:**
+```yaml
+title: Solar Industry AI Assistant
+emoji: ☀️
+colorFrom: yellow
+colorTo: orange
+sdk: streamlit
+sdk_version: 1.28.0
+app_file: app_hf.py
+pinned: false
+```
 
 ### **Docker Deployment**
 ```dockerfile

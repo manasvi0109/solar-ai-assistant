@@ -6,6 +6,14 @@ from utils import (
     get_maintenance_schedule, get_regulatory_requirements, PANEL_TYPES, REGIONAL_FACTORS
 )
 
+# Hugging Face integration (optional)
+try:
+    from huggingface_module import get_huggingface_analyzer, SOLAR_KNOWLEDGE_BASE
+    HUGGINGFACE_AVAILABLE = True
+except ImportError:
+    HUGGINGFACE_AVAILABLE = False
+    st.warning("⚠️ Hugging Face models not available. Install transformers and torch for enhanced AI features.")
+
 st.set_page_config(
     page_title="Solar Industry AI Assistant",
     layout="wide",
@@ -54,6 +62,30 @@ electricity_rate = st.sidebar.number_input(
     step=0.5
 )
 
+# Hugging Face options
+if HUGGINGFACE_AVAILABLE:
+    st.sidebar.markdown("---")
+    st.sidebar.header("🤗 Hugging Face AI")
+
+    enable_hf_analysis = st.sidebar.checkbox(
+        "Enable Advanced AI Analysis",
+        help="Use Hugging Face models for enhanced rooftop analysis"
+    )
+
+    enable_report_generation = st.sidebar.checkbox(
+        "Generate AI Report",
+        help="Create comprehensive analysis report using NLP models"
+    )
+
+    enable_knowledge_search = st.sidebar.checkbox(
+        "Enable Knowledge Search",
+        help="Semantic search through solar industry knowledge base"
+    )
+else:
+    enable_hf_analysis = False
+    enable_report_generation = False
+    enable_knowledge_search = False
+
 # Main content
 uploaded_file = st.file_uploader("Upload a rooftop image", type=["jpg", "png", "jpeg"])
 
@@ -62,13 +94,27 @@ if uploaded_file is not None:
     st.image(uploaded_file, caption="Uploaded Rooftop Image", use_container_width=True)
 
     # Analysis options
-    col1, col2 = st.columns(2)
+    if HUGGINGFACE_AVAILABLE:
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        opencv_analysis = st.button("🔍 OpenCV Analysis", use_container_width=True)
+        with col1:
+            opencv_analysis = st.button("🔍 OpenCV Analysis", use_container_width=True)
 
-    with col2:
-        ai_analysis = st.button("🤖 AI Analysis (Enhanced)", use_container_width=True)
+        with col2:
+            ai_analysis = st.button("🤖 AI Analysis (Enhanced)", use_container_width=True)
+
+        with col3:
+            hf_analysis = st.button("🤗 Hugging Face AI", use_container_width=True)
+    else:
+        col1, col2 = st.columns(2)
+
+        with col1:
+            opencv_analysis = st.button("🔍 OpenCV Analysis", use_container_width=True)
+
+        with col2:
+            ai_analysis = st.button("🤖 AI Analysis (Enhanced)", use_container_width=True)
+
+        hf_analysis = False
 
     # OpenCV Analysis
     if opencv_analysis:
@@ -114,9 +160,93 @@ if uploaded_file is not None:
             except Exception as e:
                 st.error(f"AI analysis failed: {str(e)}")
 
+    # Hugging Face Analysis
+    if hf_analysis and HUGGINGFACE_AVAILABLE:
+        with st.spinner("Running Hugging Face AI analysis..."):
+            try:
+                # Get Hugging Face analyzer
+                hf_analyzer = get_huggingface_analyzer()
+
+                if hf_analyzer:
+                    # Reset file pointer
+                    uploaded_file.seek(0)
+                    from PIL import Image
+                    pil_image = Image.open(uploaded_file)
+
+                    # Perform Hugging Face analysis
+                    hf_result = hf_analyzer.analyze_rooftop_structure(pil_image)
+
+                    if "error" not in hf_result:
+                        display_huggingface_analysis(hf_result)
+
+                        # Extract area estimate from description or use default
+                        estimated_area = extract_area_from_hf_analysis(hf_result)
+
+                        if estimated_area > 0:
+                            perform_comprehensive_analysis(estimated_area, panel_type, region, inverter_type, mounting_type, electricity_rate)
+
+                            # Generate AI report if enabled
+                            if enable_report_generation:
+                                st.markdown("---")
+                                st.markdown("## 📄 AI-Generated Report")
+
+                                # Combine all analysis data
+                                panel_data = estimate_panels(estimated_area, panel_type=panel_type)
+                                cost_data = estimate_installation_cost(panel_data, inverter_type=inverter_type, mounting_type=mounting_type)
+                                savings_data = estimate_savings(panel_data, region=region, electricity_rate=electricity_rate)
+
+                                combined_data = {
+                                    "rooftop_analysis": {"usable_area_m2": estimated_area},
+                                    "panel_data": panel_data,
+                                    "cost_data": cost_data,
+                                    "savings_data": savings_data,
+                                    "hf_analysis": hf_result
+                                }
+
+                                report = hf_analyzer.generate_analysis_report(combined_data)
+                                st.markdown(report)
+                    else:
+                        st.error(f"Hugging Face analysis failed: {hf_result['error']}")
+                else:
+                    st.error("Failed to initialize Hugging Face analyzer")
+
+            except Exception as e:
+                st.error(f"Hugging Face analysis failed: {str(e)}")
+
 else:
     # Show information when no file is uploaded
     st.info("👆 Please upload a rooftop image to begin analysis")
+
+    # Knowledge search feature (available without image upload)
+    if HUGGINGFACE_AVAILABLE and enable_knowledge_search:
+        st.markdown("---")
+        st.markdown("## 🔍 Solar Knowledge Search")
+
+        search_query = st.text_input(
+            "Search solar industry knowledge:",
+            placeholder="e.g., 'best panel type for hot climate' or 'roof angle optimization'"
+        )
+
+        if search_query:
+            with st.spinner("Searching knowledge base..."):
+                try:
+                    hf_analyzer = get_huggingface_analyzer()
+                    if hf_analyzer:
+                        results = hf_analyzer.semantic_search(search_query, SOLAR_KNOWLEDGE_BASE)
+
+                        if results:
+                            st.markdown("### 📚 Search Results")
+                            for i, (doc, score) in enumerate(results[:5], 1):
+                                confidence = "🟢 High" if score > 0.7 else "🟡 Medium" if score > 0.5 else "🔴 Low"
+                                st.markdown(f"**{i}.** {doc}")
+                                st.caption(f"Relevance: {confidence} ({score:.2f})")
+                                st.markdown("")
+                        else:
+                            st.info("No relevant results found. Try different keywords.")
+                    else:
+                        st.error("Knowledge search not available")
+                except Exception as e:
+                    st.error(f"Search failed: {str(e)}")
 
     # Display sample information
     with st.expander("📋 What this tool analyzes"):
@@ -411,3 +541,97 @@ def display_regulatory_info(regulatory_data):
     with st.expander("⚡ Safety Standards"):
         for standard in regulatory_data['safety_standards']:
             st.write(f"• {standard}")
+
+
+def display_huggingface_analysis(hf_result):
+    """Display Hugging Face analysis results."""
+    st.markdown("## 🤗 Hugging Face AI Analysis")
+
+    # Roof classification
+    if "roof_classification" in hf_result:
+        st.markdown("### 🏠 Roof Classification")
+        classifications = hf_result["roof_classification"]
+        for i, cls in enumerate(classifications, 1):
+            confidence = cls["score"]
+            confidence_color = "green" if confidence > 0.7 else "orange" if confidence > 0.4 else "red"
+            st.markdown(f"**{i}.** {cls['label']} - :{confidence_color}[{confidence:.1%}]")
+
+    # Object detection
+    if "detected_objects" in hf_result:
+        st.markdown("### 🔍 Detected Objects")
+        objects = hf_result["detected_objects"]
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("**Obstacles:**")
+            if objects.get("obstacles"):
+                for obj in objects["obstacles"]:
+                    st.write(f"• {obj['type'].title()} ({obj['confidence']:.1%})")
+            else:
+                st.write("• No obstacles detected")
+
+        with col2:
+            st.markdown("**Roof Features:**")
+            if objects.get("roof_features"):
+                for obj in objects["roof_features"]:
+                    st.write(f"• {obj['type'].title()} ({obj['confidence']:.1%})")
+            else:
+                st.write("• No specific features detected")
+
+    # Description
+    if "description" in hf_result:
+        st.markdown("### 📝 AI Description")
+        st.write(hf_result["description"])
+
+    # Confidence score
+    if "confidence_score" in hf_result:
+        confidence = hf_result["confidence_score"]
+        confidence_color = "green" if confidence > 0.7 else "orange" if confidence > 0.4 else "red"
+        st.markdown(f"**Overall Confidence:** :{confidence_color}[{confidence:.1%}]")
+
+
+def extract_area_from_hf_analysis(hf_result):
+    """Extract usable area estimate from Hugging Face analysis."""
+    # Try to extract area from description using regex
+    import re
+
+    description = hf_result.get("description", "")
+
+    # Look for area mentions in the description
+    area_patterns = [
+        r'(\d+(?:\.\d+)?)\s*(?:square\s*)?(?:meters?|m²|m2)',
+        r'(\d+(?:\.\d+)?)\s*(?:m²|m2)',
+        r'area.*?(\d+(?:\.\d+)?)',
+        r'(\d+(?:\.\d+)?)\s*(?:sq\.?\s*m)'
+    ]
+
+    for pattern in area_patterns:
+        match = re.search(pattern, description.lower())
+        if match:
+            try:
+                area = float(match.group(1))
+                if 10 <= area <= 1000:  # Reasonable range
+                    return area
+            except (ValueError, IndexError):
+                continue
+
+    # Fallback: estimate based on detected objects and classification
+    base_area = 80.0  # Default assumption
+
+    # Adjust based on roof classification confidence
+    if "confidence_score" in hf_result:
+        confidence = hf_result["confidence_score"]
+        if confidence > 0.8:
+            base_area *= 1.1  # Increase if very confident
+        elif confidence < 0.5:
+            base_area *= 0.8  # Decrease if low confidence
+
+    # Adjust based on detected obstacles
+    if "detected_objects" in hf_result:
+        obstacles = hf_result["detected_objects"].get("obstacles", [])
+        obstacle_count = len(obstacles)
+        if obstacle_count > 0:
+            base_area *= (1 - obstacle_count * 0.05)  # Reduce by 5% per obstacle
+
+    return max(20.0, base_area)  # Minimum 20 m²
