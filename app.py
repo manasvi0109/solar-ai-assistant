@@ -1,4 +1,12 @@
 import streamlit as st
+
+# Must be the first Streamlit command
+st.set_page_config(
+    page_title="Solar Industry AI Assistant",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 from ai_module import analyze_rooftop_with_structured_output
 from opencv_module import process_image_for_rooftop
 from utils import (
@@ -13,12 +21,6 @@ try:
 except ImportError:
     HUGGINGFACE_AVAILABLE = False
     st.warning("⚠️ Hugging Face models not available. Install transformers and torch for enhanced AI features.")
-
-st.set_page_config(
-    page_title="Solar Industry AI Assistant",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 st.title("☀️ Solar Industry AI Assistant")
 st.markdown("### Professional Solar Installation Analysis & ROI Calculator")
