@@ -328,10 +328,3 @@ This project is developed for educational and assessment purposes. It demonstrat
 
 ---
 
-<div align="center">
-
-**Built with ❤️ for the Solar Industry AI Internship Assessment**
-
-*Demonstrating the future of AI-powered solar installation analysis*
-
-</div>
